@@ -1,0 +1,8 @@
+{
+  "name": "chicago-shortlist",
+  "version": "1.0.0",
+  "dependencies": {
+    "@netlify/database": "^2.0.4"
+  },
+  "private": true
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Vote on Chicago activities and add ideas to the group’s shortlist.">
+  <title>The Chicago Shortlist</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <nav aria-label="Board actions"><a href="/" class="brand"><span aria-hidden="true">✶</span> The Chicago Shortlist</a><button id="share" class="share">Copy board link</button></nav>
+      <div class="intro">
+        <div class="flag" aria-hidden="true">✶ ✶ ✶ ✶</div>
+        <h1>What should we<br>do in Chicago?</h1>
+        <p>Like your favorites and add the places you want to go.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <form id="profile" class="profile">
+      <div><label for="name">Your name</label><p id="name-help">Your name appears on the activities you like.</p></div>
+      <div class="name-field"><input id="name" name="name" placeholder="e.g. Jordan" maxlength="40" autocomplete="nickname" aria-describedby="name-help" required><button class="primary" type="submit">Save name</button></div>
+    </form>
+    <p id="notice" class="notice" role="status"></p>
+    <section aria-labelledby="activities-title">
+      <div class="board-head"><div><h2 id="activities-title">Things to do</h2><p id="summary">Loading activities…</p></div><button id="add" class="primary" type="button">+ Add an idea</button></div>
+      <div class="board-tools"><label for="sort">Sort by</label><select id="sort"><option value="default">Board order</option><option value="popular">Most liked</option></select></div>
+      <div id="board" class="board"></div>
+    </section>
+  </main>
+
+  <dialog id="idea-dialog" aria-labelledby="idea-heading">
+    <form id="idea-form">
+      <div class="dialog-head"><h2 id="idea-heading">Add an idea</h2><button id="close" type="button" class="close" aria-label="Close">×</button></div>
+      <label>Activity name<input name="title" maxlength="90" required placeholder="e.g. Garfield Park Conservatory"></label>
+      <label>Website<input name="url" type="url" maxlength="1000" required placeholder="https://"></label>
+      <label>Category<select name="category"><option>Other</option><option>Sightseeing</option><option>Arts &amp; culture</option><option>Food &amp; drink</option><option>Outdoors</option></select></label>
+      <label>Description <span>(optional)</span><textarea name="description" maxlength="220" rows="3"></textarea></label>
+      <p id="idea-error" class="error" role="alert"></p>
+      <button id="submit-idea" class="primary" type="submit">Add to the board</button>
+    </form>
+  </dialog>
+</body>
+</html>
