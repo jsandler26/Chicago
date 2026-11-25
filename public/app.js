@@ -47,10 +47,11 @@ function render() {
     link.target = '_blank'
     link.rel = 'noopener noreferrer'
     link.setAttribute('aria-label', 'Visit website for ' + activity.title + ' (opens in a new tab)')
-    card.append(element('div', 'category', activity.category), element('h3', '', activity.title))
-    if (activity.description) card.append(element('p', 'description', activity.description))
-    card.append(link)
-    if (activity.added_by) card.append(element('p', 'attribution', 'Suggested by ' + activity.added_by))
+    const details = element('div', 'card-details')
+    details.append(element('div', 'category', activity.category), element('h3', '', activity.title))
+    if (activity.description) details.append(element('p', 'description', activity.description))
+    details.append(link)
+    if (activity.added_by) details.append(element('p', 'attribution', 'Suggested by ' + activity.added_by))
 
     const bottom = element('div', 'card-bottom')
     const voting = element('div', 'voting')
@@ -64,7 +65,7 @@ function render() {
     voting.append(button, element('span', 'count', count(activity.names.length, 'like')))
     bottom.append(voting)
     if (activity.names.length) bottom.append(element('p', 'names', 'Liked by ' + activity.names.join(', ')))
-    card.append(bottom)
+    card.append(details, bottom)
     return card
   })
   board.replaceChildren(...cards)
