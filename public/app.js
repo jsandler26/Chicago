@@ -50,11 +50,6 @@ function render() {
   summary.textContent = count(activities.length, 'idea') + ' · ' + count(total, 'like')
   const cards = ordered.map(activity => {
     const card = element('article', 'card')
-    const link = element('a', '', 'Visit website')
-    link.href = activity.url
-    link.target = '_blank'
-    link.rel = 'noopener noreferrer'
-    link.setAttribute('aria-label', 'Visit website for ' + activity.title + ' (opens in a new tab)')
     const details = element('div', 'card-details')
     details.append(element('div', 'category', activity.category), element('h3', '', activity.title))
     if (activity.description) details.append(element('p', 'description', activity.description))
@@ -65,7 +60,15 @@ function render() {
     edit.addEventListener('click', () => openIdea(activity))
     if (focusedId === edit.dataset.activity) focusTarget = edit
     const links = element('div', 'card-links')
-    links.append(link, edit)
+    if (activity.url) {
+      const link = element('a', '', 'Visit website')
+      link.href = activity.url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.setAttribute('aria-label', 'Visit website for ' + activity.title + ' (opens in a new tab)')
+      links.append(link)
+    }
+    links.append(edit)
     details.append(links)
     if (activity.added_by) details.append(element('p', 'attribution', 'Suggested by ' + activity.added_by))
 
@@ -202,7 +205,7 @@ async function findWebsite() {
     const { suggestion } = await response.json()
     if (lookup !== controller) return
     if (!suggestion) {
-      websiteStatus.textContent = 'No matching website found. You can enter the link yourself.'
+      websiteStatus.textContent = 'No matching website found. You can enter a link or leave it blank.'
       return
     }
     suggestedLink.href = suggestion.url
@@ -210,7 +213,7 @@ async function findWebsite() {
     websiteStatus.textContent = 'Suggested website for ' + suggestion.title
     suggestionBox.hidden = false
   } catch {
-    if (lookup === controller) websiteStatus.textContent = 'Website lookup is unavailable. You can enter the link yourself.'
+    if (lookup === controller) websiteStatus.textContent = 'Website lookup is unavailable. You can enter a link or leave it blank.'
   } finally {
     if (lookup === controller) lookup = undefined
   }

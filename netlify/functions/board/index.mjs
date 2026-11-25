@@ -24,7 +24,7 @@ export default async function handler(request) {
     try {
       return respond({ suggestion: await suggestWebsite(title) })
     } catch {
-      return respond({ error: 'Website lookup is unavailable. You can enter the link yourself.' }, 503)
+      return respond({ error: 'Website lookup is unavailable. You can enter a link or leave it blank.' }, 503)
     }
   }
 
@@ -76,8 +76,11 @@ export default async function handler(request) {
         const inputUrl = clean(data.url)
         const url = website(inputUrl)
         const description = clean(data.description)
-        if (!title || title.length > 90 || !url || url.length > 1000 || description.length > 220 || !categories.has(data.category)) {
-          return respond({ error: 'Enter an activity title and a valid website address. Keep the description under 220 characters.' }, 400)
+        if (!title || title.length > 90 || description.length > 220 || !categories.has(data.category)) {
+          return respond({ error: 'Enter an activity title, select a category, and keep the description under 220 characters.' }, 400)
+        }
+        if ((inputUrl && !url) || url.length > 1000) {
+          return respond({ error: 'Enter a valid website address or leave it blank.' }, 400)
         }
         if (data.action === 'edit') {
           const rows = await sql`
