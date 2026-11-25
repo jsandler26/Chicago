@@ -1,5 +1,8 @@
 const byId = id => document.getElementById(id)
 const board = byId('board')
+const tabs = [...byId('board-tabs').querySelectorAll('[role="tab"]')]
+const restaurantCategory = 'Food & drink'
+let selectedTab = tabs[0]
 const nameField = byId('name')
 const notice = byId('notice')
 const summary = byId('summary')
@@ -41,13 +44,30 @@ function count(number, singular, plural = singular + 's') {
   return number + ' ' + (number === 1 ? singular : plural)
 }
 
+function tabFor(category) {
+  return category === restaurantCategory ? tabs[1] : tabs[0]
+}
+
+function selectTab(tab) {
+  selectedTab = tab
+  for (const item of tabs) {
+    const selected = item === tab
+    item.setAttribute('aria-selected', selected)
+    item.tabIndex = selected ? 0 : -1
+    const panel = byId(item.getAttribute('aria-controls'))
+    if (selected) panel.append(byId('board-content'))
+    panel.hidden = !selected
+  }
+  if (loaded) render()
+}
+
 function render() {
   const focusedId = document.activeElement?.dataset.activity
   let focusTarget
-  const ordered = [...activities]
+  const ordered = activities.filter(activity => tabFor(activity.category) === selectedTab)
   if (byId('sort').value === 'popular') ordered.sort((a, b) => b.names.length - a.names.length)
-  const total = activities.reduce((sum, activity) => sum + activity.names.length, 0)
-  summary.textContent = count(activities.length, 'idea') + ' · ' + count(total, 'vote')
+  const total = ordered.reduce((sum, activity) => sum + activity.names.length, 0)
+  summary.textContent = count(ordered.length, 'idea') + ' · ' + count(total, 'vote')
   const cards = ordered.map(activity => {
     const card = element('article', 'card')
     const details = element('div', 'card-details')
@@ -88,6 +108,7 @@ function render() {
     return card
   })
   board.replaceChildren(...cards)
+  if (!ordered.length) board.append(element('p', 'empty-board', 'No ideas yet. Add the first one.'))
   focusTarget?.focus({ preventScroll: true })
 }
 
@@ -177,6 +198,19 @@ byId('share').addEventListener('click', async () => {
     notice.textContent = 'Copy the board link from your browser’s address bar.'
   }
 })
+for (const tab of tabs) {
+  tab.addEventListener('click', () => selectTab(tab))
+  tab.addEventListener('keydown', event => {
+    let next
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') next = tabs.find(item => item !== tab)
+    if (event.key === 'Home') next = tabs[0]
+    if (event.key === 'End') next = tabs.at(-1)
+    if (!next) return
+    event.preventDefault()
+    selectTab(next)
+    next.focus()
+  })
+}
 byId('sort').addEventListener('change', () => { if (loaded) render() })
 function clearSuggestion() {
   lookup?.abort()
@@ -228,9 +262,10 @@ function openIdea(activity) {
   if (activity) {
     ideaTitle.value = activity.title
     ideaUrl.value = activity.url
-    ideaForm.elements.namedItem('category').value = activity.category
     ideaForm.elements.namedItem('description').value = activity.description
   }
+  const category = ideaForm.elements.namedItem('category')
+  category.value = activity?.category ?? (selectedTab === tabs[1] ? restaurantCategory : 'Other')
   byId('idea-heading').textContent = activity ? 'Edit activity' : 'Add an idea'
   submitIdea.textContent = activity ? 'Save changes' : 'Add to the board'
   deleteIdea.hidden = !activity
@@ -264,7 +299,15 @@ async function submitActivity(action, name, fields = {}) {
     dialog.close()
     const messages = { add: 'Your idea was added to the board.', edit: 'Activity updated.', delete: 'Activity removed from the board.' }
     notice.textContent = messages[action]
-    if (action === 'delete') byId('add').focus()
+    if (action === 'delete') {
+      byId('add').focus()
+    } else {
+      const destination = tabFor(fields.category)
+      if (destination !== selectedTab) {
+        selectTab(destination)
+        destination.focus()
+      }
+    }
   } catch (error) {
     errorField.textContent = error.message
   } finally {

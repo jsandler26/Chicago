@@ -71,3 +71,9 @@ dialog input,dialog select,dialog textarea{display:block;width:100%;margin-top:5
 .idea-actions #submit-idea{flex:1}
 .delete-idea{color:#94172b;border-color:#e7a9b6;background:#fff}
 .delete-idea:hover{background:#fce8ed}
+
+.board-tabs{display:flex;gap:4px;margin-top:12px;border-bottom:1px solid var(--border)}
+.board-tabs button{flex:1;white-space:normal;border-radius:7px 7px 0 0;background:transparent;color:var(--navy);border-bottom:3px solid transparent}
+.board-tabs button:hover{background:#e0edf5}
+.board-tabs button[aria-selected=true]{background:white;border-bottom-color:var(--red)}
+.empty-board{padding:14px;color:#4c6374;background:white;border:1px solid var(--border);border-radius:8px}

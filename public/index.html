@@ -25,11 +25,21 @@
       <div class="name-field"><input id="name" name="name" placeholder="e.g. Jordan" maxlength="40" autocomplete="nickname" aria-describedby="name-help" required><button class="primary" type="submit">Save name</button></div>
     </form>
     <p id="notice" class="notice" role="status"></p>
-    <section aria-labelledby="activities-title">
-      <div class="board-head"><div><h2 id="activities-title">Things to do</h2><p id="summary">Loading activities…</p></div><button id="add" class="primary" type="button">+ Add an idea</button></div>
-      <div class="board-tools"><label for="sort">Sort by</label><select id="sort"><option value="popular">Most votes</option><option value="default">Board order</option></select></div>
-      <div id="board" class="board"></div>
+    <div class="board-tabs" id="board-tabs" role="tablist" aria-label="Voting boards">
+      <button id="events-tab" type="button" role="tab" aria-selected="true" aria-controls="events-panel">Events &amp; Locations</button>
+      <button id="restaurants-tab" type="button" role="tab" aria-selected="false" aria-controls="restaurants-panel" tabindex="-1">Restaurants &amp; Bars</button>
+    </div>
+    <section id="events-panel" role="tabpanel" aria-labelledby="events-tab">
+      <div id="board-content">
+        <div class="board-head">
+          <p id="summary">Loading activities…</p>
+          <button id="add" class="primary" type="button">+ Add an idea</button>
+        </div>
+        <div class="board-tools"><label for="sort">Sort by</label><select id="sort"><option value="popular">Most votes</option><option value="default">Board order</option></select></div>
+        <div id="board" class="board"></div>
+      </div>
     </section>
+    <section id="restaurants-panel" role="tabpanel" aria-labelledby="restaurants-tab" hidden></section>
   </main>
 
   <dialog id="idea-dialog" aria-labelledby="idea-heading">
@@ -48,7 +58,7 @@
           <button id="use-website" class="secondary" type="button">Use this link</button>
         </div>
       </div>
-      <label>Category<select name="category"><option>Other</option><option>Sightseeing</option><option>Arts &amp; culture</option><option>Food &amp; drink</option><option>Outdoors</option></select></label>
+      <label>Category<select name="category"><option>Other</option><option>Sightseeing</option><option>Arts &amp; culture</option><option value="Food &amp; drink">Restaurants &amp; bars</option><option>Outdoors</option></select></label>
       <label>Description <span>(optional)</span><textarea name="description" maxlength="220" rows="3"></textarea></label>
       <p id="idea-error" class="error" role="alert"></p>
       <div class="idea-actions">
