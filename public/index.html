@@ -36,7 +36,18 @@
     <form id="idea-form">
       <div class="dialog-head"><h2 id="idea-heading">Add an idea</h2><button id="close" type="button" class="close" aria-label="Close">×</button></div>
       <label>Activity name<input name="title" maxlength="90" required placeholder="e.g. Garfield Park Conservatory"></label>
-      <label>Website<input name="url" type="url" maxlength="1000" required placeholder="https://"></label>
+      <div>
+        <label for="idea-url">Website</label>
+        <div class="website-field">
+          <input id="idea-url" name="url" type="url" maxlength="1000" required placeholder="https://" aria-describedby="website-status">
+          <button id="find-website" class="secondary" type="button">Find website</button>
+        </div>
+        <p id="website-status" class="website-status" role="status"></p>
+        <div id="website-suggestion" class="website-suggestion" hidden>
+          <a id="suggested-link" target="_blank" rel="noopener noreferrer"></a>
+          <button id="use-website" class="secondary" type="button">Use this link</button>
+        </div>
+      </div>
       <label>Category<select name="category"><option>Other</option><option>Sightseeing</option><option>Arts &amp; culture</option><option>Food &amp; drink</option><option>Outdoors</option></select></label>
       <label>Description <span>(optional)</span><textarea name="description" maxlength="220" rows="3"></textarea></label>
       <p id="idea-error" class="error" role="alert"></p>

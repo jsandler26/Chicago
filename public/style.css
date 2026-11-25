@@ -55,3 +55,14 @@ dialog input,dialog select,dialog textarea{display:block;width:100%;margin-top:5
 .error{color:#94172b}
 .error:empty{display:none}
 @media(max-width:560px){.wrap{width:calc(100% - 28px)}.profile{display:block}.name-field{margin-top:12px}.name-field input{flex:1;width:0}.card{grid-template-columns:minmax(0,1fr)}.card-bottom{padding-top:7px;border-top:1px solid #e3edf2}h2{font-size:1.65rem}}
+
+.card-links,.website-field,.website-suggestion{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-links{width:fit-content}
+.secondary{background:#eaf2f7;color:var(--navy);border-color:#ccdfe9}
+.secondary:hover{background:#dae9f2}
+.card-links .secondary{padding:5px 9px}
+.website-field{margin-top:5px}
+.website-field input{flex:1 1 9rem;width:auto;margin-top:0}
+.website-status,.website-suggestion{margin-top:5px;font-size:.9rem}
+.website-status:empty,.website-suggestion[hidden]{display:none}
+.website-suggestion a{color:#165579;overflow-wrap:anywhere;min-width:0}

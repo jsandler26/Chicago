@@ -6,6 +6,11 @@ const summary = byId('summary')
 const dialog = byId('idea-dialog')
 const ideaForm = byId('idea-form')
 const submitIdea = byId('submit-idea')
+const ideaTitle = ideaForm.elements.namedItem('title')
+const ideaUrl = ideaForm.elements.namedItem('url')
+const websiteStatus = byId('website-status')
+const suggestionBox = byId('website-suggestion')
+const suggestedLink = byId('suggested-link')
 const storage = {
   get(key) { try { return localStorage.getItem(key) } catch { return null } },
   set(key, value) { try { localStorage.setItem(key, value) } catch {} },
@@ -21,6 +26,8 @@ let writing = false
 let reading = false
 let revision = 0
 let ideaId
+let editing
+let lookup
 
 function element(tag, className, text) {
   const node = document.createElement(tag)
@@ -50,7 +57,15 @@ function render() {
     const details = element('div', 'card-details')
     details.append(element('div', 'category', activity.category), element('h3', '', activity.title))
     if (activity.description) details.append(element('p', 'description', activity.description))
-    details.append(link)
+    const edit = element('button', 'secondary', 'Edit')
+    edit.type = 'button'
+    edit.dataset.activity = activity.id + '-edit'
+    edit.setAttribute('aria-label', 'Edit ' + activity.title)
+    edit.addEventListener('click', () => openIdea(activity))
+    if (focusedId === edit.dataset.activity) focusTarget = edit
+    const links = element('div', 'card-links')
+    links.append(link, edit)
+    details.append(links)
     if (activity.added_by) details.append(element('p', 'attribution', 'Suggested by ' + activity.added_by))
 
     const bottom = element('div', 'card-bottom')
@@ -110,7 +125,7 @@ async function refresh() {
 function saveName() {
   const name = nameField.value.trim().replace(/\s+/g, ' ')
   if (!name) {
-    notice.textContent = 'Enter your name to like an activity or add an idea.'
+    notice.textContent = 'Enter your name to like, add, or edit an activity.'
     nameField.focus()
     return ''
   }
@@ -159,13 +174,78 @@ byId('share').addEventListener('click', async () => {
   }
 })
 byId('sort').addEventListener('change', () => { if (loaded) render() })
-byId('add').addEventListener('click', () => {
+function clearSuggestion() {
+  lookup?.abort()
+  lookup = undefined
+  suggestionBox.hidden = true
+  websiteStatus.textContent = ''
+}
+
+async function findWebsite() {
+  const title = ideaTitle.value.trim()
+  if (lookup) return
+  clearSuggestion()
+  if (title.length < 3) {
+    websiteStatus.textContent = 'Enter an activity name first.'
+    return
+  }
+  const controller = new AbortController()
+  lookup = controller
+  websiteStatus.textContent = 'Looking for a website…'
+  try {
+    const response = await fetch('/api/board?' + new URLSearchParams({ suggest: title }), {
+      headers: { 'X-Visitor': visitor },
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(9000)]),
+    })
+    if (!response.ok) throw new Error('Lookup failed')
+    const { suggestion } = await response.json()
+    if (lookup !== controller) return
+    if (!suggestion) {
+      websiteStatus.textContent = 'No matching website found. You can enter the link yourself.'
+      return
+    }
+    suggestedLink.href = suggestion.url
+    suggestedLink.textContent = suggestion.url
+    websiteStatus.textContent = 'Suggested website for ' + suggestion.title
+    suggestionBox.hidden = false
+  } catch {
+    if (lookup === controller) websiteStatus.textContent = 'Website lookup is unavailable. You can enter the link yourself.'
+  } finally {
+    if (lookup === controller) lookup = undefined
+  }
+}
+
+function openIdea(activity) {
   if (!saveName()) return
-  ideaId = crypto.randomUUID()
+  editing = activity
+  ideaId = activity?.id ?? crypto.randomUUID()
+  ideaForm.reset()
+  clearSuggestion()
+  if (activity) {
+    ideaTitle.value = activity.title
+    ideaUrl.value = activity.url
+    ideaForm.elements.namedItem('category').value = activity.category
+    ideaForm.elements.namedItem('description').value = activity.description
+  }
+  byId('idea-heading').textContent = activity ? 'Edit activity' : 'Add an idea'
+  submitIdea.textContent = activity ? 'Save changes' : 'Add to the board'
   notice.textContent = ''
   byId('idea-error').textContent = ''
   dialog.showModal()
+}
+
+byId('add').addEventListener('click', () => openIdea())
+ideaTitle.addEventListener('input', clearSuggestion)
+ideaTitle.addEventListener('change', () => {
+  if (!ideaUrl.value.trim() && ideaTitle.value.trim().length >= 3) findWebsite()
 })
+byId('find-website').addEventListener('click', findWebsite)
+byId('use-website').addEventListener('click', () => {
+  ideaUrl.value = suggestedLink.href
+  clearSuggestion()
+  ideaUrl.focus()
+})
+dialog.addEventListener('close', clearSuggestion)
 byId('close').addEventListener('click', () => { if (!submitIdea.disabled) dialog.close() })
 dialog.addEventListener('cancel', event => { if (submitIdea.disabled) event.preventDefault() })
 ideaForm.addEventListener('submit', async event => {
@@ -178,10 +258,10 @@ ideaForm.addEventListener('submit', async event => {
   errorField.textContent = ''
   try {
     const fields = Object.fromEntries(new FormData(ideaForm))
-    await change({ ...fields, action: 'add', id: ideaId, name })
+    await change({ ...fields, action: editing ? 'edit' : 'add', id: ideaId, version: editing?.version, name })
     ideaForm.reset()
     dialog.close()
-    notice.textContent = 'Your idea was added to the board.'
+    notice.textContent = editing ? 'Activity updated.' : 'Your idea was added to the board.'
   } catch (error) {
     errorField.textContent = error.message
   } finally {

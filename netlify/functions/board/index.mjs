@@ -1,4 +1,5 @@
 import { getDatabase } from '@netlify/database'
+import { suggestWebsite, website } from './website.mjs'
 
 export const config = { path: '/api/board' }
 
@@ -13,17 +14,20 @@ function clean(value) {
   return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : ''
 }
 
-function website(value) {
-  try {
-    const url = new URL(value)
-    if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) return url.href
-  } catch {}
-  return ''
-}
-
 export default async function handler(request) {
   const visitor = request.headers.get('X-Visitor')
   if (!uuid.test(visitor ?? '')) return respond({ error: 'The board could not identify this browser.' }, 400)
+  const query = new URL(request.url).searchParams
+  if (request.method === 'GET' && query.has('suggest')) {
+    const title = clean(query.get('suggest'))
+    if (title.length < 3 || title.length > 90) return respond({ suggestion: null })
+    try {
+      return respond({ suggestion: await suggestWebsite(title) })
+    } catch {
+      return respond({ error: 'Website lookup is unavailable. You can enter the link yourself.' }, 503)
+    }
+  }
+
   try {
     const sql = getDatabase().sql
     if (request.method === 'POST') {
@@ -47,7 +51,7 @@ export default async function handler(request) {
         } else {
           await sql`DELETE FROM likes WHERE activity_id = ${data.id} AND visitor_id = ${visitor}`
         }
-      } else if (data.action === 'add') {
+      } else if (data.action === 'add' || data.action === 'edit') {
         const title = clean(data.title)
         const inputUrl = clean(data.url)
         const url = website(inputUrl)
@@ -55,11 +59,26 @@ export default async function handler(request) {
         if (!title || title.length > 90 || !url || url.length > 1000 || description.length > 220 || !categories.has(data.category)) {
           return respond({ error: 'Enter an activity title and a valid website address. Keep the description under 220 characters.' }, 400)
         }
-        await sql`
-          INSERT INTO activities (id, title, url, category, description, added_by)
-          VALUES (${data.id}, ${title}, ${url}, ${data.category}, ${description}, ${name})
-          ON CONFLICT (id) DO NOTHING
-        `
+        if (data.action === 'edit') {
+          if (!Number.isInteger(data.version) || data.version < 0 || data.version > 2147483647) {
+            return respond({ error: 'Close and reopen the edit form to load the latest activity.' }, 400)
+          }
+          const rows = await sql`
+            UPDATE activities SET title = ${title}, url = ${url}, category = ${data.category},
+              description = ${description}, version = version + 1
+            WHERE id = ${data.id} AND version = ${data.version}
+            RETURNING id
+          `
+          if (!rows.length) {
+            return respond({ error: 'This activity changed. Close and reopen the form to see the latest version.' }, 409)
+          }
+        } else {
+          await sql`
+            INSERT INTO activities (id, title, url, category, description, added_by)
+            VALUES (${data.id}, ${title}, ${url}, ${data.category}, ${description}, ${name})
+            ON CONFLICT (id) DO NOTHING
+          `
+        }
       } else {
         return respond({ error: 'Invalid action.' }, 400)
       }
@@ -68,7 +87,7 @@ export default async function handler(request) {
     }
 
     const activities = await sql`
-      SELECT a.id, a.title, a.url, a.category, a.description, a.added_by,
+      SELECT a.id, a.title, a.url, a.category, a.description, a.added_by, a.version,
         COALESCE(array_agg(l.name ORDER BY l.created_at, l.visitor_id)
           FILTER (WHERE l.visitor_id IS NOT NULL), ARRAY[]::text[]) AS names,
         COALESCE(bool_or(l.visitor_id = ${visitor}), false) AS liked
