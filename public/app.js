@@ -47,7 +47,7 @@ function render() {
   const ordered = [...activities]
   if (byId('sort').value === 'popular') ordered.sort((a, b) => b.names.length - a.names.length)
   const total = activities.reduce((sum, activity) => sum + activity.names.length, 0)
-  summary.textContent = count(activities.length, 'idea') + ' · ' + count(total, 'like')
+  summary.textContent = count(activities.length, 'idea') + ' · ' + count(total, 'vote')
   const cards = ordered.map(activity => {
     const card = element('article', 'card')
     const details = element('div', 'card-details')
@@ -74,16 +74,16 @@ function render() {
 
     const bottom = element('div', 'card-bottom')
     const voting = element('div', 'voting')
-    const button = element('button', 'like', activity.liked ? '♥ Liked' : '♡ Like')
+    const button = element('button', 'like', activity.liked ? '✓ Voted' : 'Vote')
     button.type = 'button'
     button.dataset.activity = activity.id
     button.setAttribute('aria-pressed', activity.liked)
-    button.setAttribute('aria-label', 'Like ' + activity.title)
-    button.addEventListener('click', () => toggleLike(activity))
+    button.setAttribute('aria-label', 'Vote for ' + activity.title)
+    button.addEventListener('click', () => toggleVote(activity))
     if (focusedId === activity.id) focusTarget = button
-    voting.append(button, element('span', 'count', count(activity.names.length, 'like')))
+    voting.append(button, element('span', 'count', count(activity.names.length, 'vote')))
     bottom.append(voting)
-    if (activity.names.length) bottom.append(element('p', 'names', 'Liked by ' + activity.names.join(', ')))
+    if (activity.names.length) bottom.append(element('p', 'names', 'Votes from ' + activity.names.join(', ')))
     card.append(details, bottom)
     return card
   })
@@ -129,7 +129,7 @@ async function refresh() {
 function saveName() {
   const name = nameField.value.trim().replace(/\s+/g, ' ')
   if (!name) {
-    notice.textContent = 'Enter your name to like, add, or edit an activity.'
+    notice.textContent = 'Enter your name to vote, add, or edit an activity.'
     nameField.focus()
     return ''
   }
@@ -150,14 +150,14 @@ async function change(data) {
   }
 }
 
-async function toggleLike(activity) {
+async function toggleVote(activity) {
   if (writing) return
   const name = saveName()
   if (!name) return
   notice.textContent = ''
   try {
     await change({ action: 'like', id: activity.id, liked: !activity.liked, name })
-    notice.textContent = activity.liked ? 'Like removed.' : 'Like added.'
+    notice.textContent = activity.liked ? 'Vote removed.' : 'Vote added.'
   } catch (error) {
     notice.textContent = error.message
   }

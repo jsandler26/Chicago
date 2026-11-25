@@ -14,20 +14,20 @@
       <nav aria-label="Board actions"><a href="/" class="brand"><span aria-hidden="true">✶</span> The Chicago Shortlist</a><button id="share" class="share">Copy board link</button></nav>
       <div class="intro">
         <h1>What should we do in Chicago?</h1>
-        <p>Like your favorites and add the places you want to go.</p>
+        <p>Vote for your favorites and add the places you want to go.</p>
       </div>
     </div>
   </header>
 
   <main class="wrap">
     <form id="profile" class="profile">
-      <div><label for="name">Your name</label><p id="name-help">Your name appears on the activities you like.</p></div>
+      <div><label for="name">Your name</label><p id="name-help">Your name appears on the activities you vote for.</p></div>
       <div class="name-field"><input id="name" name="name" placeholder="e.g. Jordan" maxlength="40" autocomplete="nickname" aria-describedby="name-help" required><button class="primary" type="submit">Save name</button></div>
     </form>
     <p id="notice" class="notice" role="status"></p>
     <section aria-labelledby="activities-title">
       <div class="board-head"><div><h2 id="activities-title">Things to do</h2><p id="summary">Loading activities…</p></div><button id="add" class="primary" type="button">+ Add an idea</button></div>
-      <div class="board-tools"><label for="sort">Sort by</label><select id="sort"><option value="default">Board order</option><option value="popular">Most liked</option></select></div>
+      <div class="board-tools"><label for="sort">Sort by</label><select id="sort"><option value="default">Board order</option><option value="popular">Most votes</option></select></div>
       <div id="board" class="board"></div>
     </section>
   </main>
