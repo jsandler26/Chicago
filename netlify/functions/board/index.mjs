@@ -39,17 +39,37 @@ export default async function handler(request) {
       if (!name || name.length > 40 || !uuid.test(data?.id ?? '')) {
         return respond({ error: 'Enter a name between 1 and 40 characters.' }, 400)
       }
+      if (['edit', 'delete'].includes(data.action) &&
+        (!Number.isInteger(data.version) || data.version < 0 || data.version > 2147483647)) {
+        return respond({ error: 'Close and reopen the edit form to load the latest activity.' }, 400)
+      }
       if (data.action === 'like' && typeof data.liked === 'boolean') {
         if (data.liked) {
           const rows = await sql`
             INSERT INTO likes (activity_id, visitor_id, name)
-            SELECT id, ${visitor}, ${name} FROM activities WHERE id = ${data.id}
+            SELECT id, ${visitor}, ${name} FROM activities WHERE id = ${data.id} AND deleted_at IS NULL
             ON CONFLICT (activity_id, visitor_id) DO UPDATE SET name = EXCLUDED.name
             RETURNING activity_id
           `
           if (!rows.length) return respond({ error: 'This activity is no longer available.' }, 404)
         } else {
-          await sql`DELETE FROM likes WHERE activity_id = ${data.id} AND visitor_id = ${visitor}`
+          await sql`
+            DELETE FROM likes USING activities
+            WHERE activity_id = activities.id AND activity_id = ${data.id}
+              AND visitor_id = ${visitor} AND activities.deleted_at IS NULL
+          `
+        }
+      } else if (data.action === 'delete') {
+        const rows = await sql`
+          UPDATE activities SET deleted_at = now(), version = version + 1
+          WHERE id = ${data.id} AND version = ${data.version} AND deleted_at IS NULL
+          RETURNING id
+        `
+        if (!rows.length) {
+          const [activity] = await sql`SELECT deleted_at FROM activities WHERE id = ${data.id}`
+          if (!activity?.deleted_at) {
+            return respond({ error: 'This activity changed. Close and reopen the form to see the latest version.' }, 409)
+          }
         }
       } else if (data.action === 'add' || data.action === 'edit') {
         const title = clean(data.title)
@@ -60,13 +80,10 @@ export default async function handler(request) {
           return respond({ error: 'Enter an activity title and a valid website address. Keep the description under 220 characters.' }, 400)
         }
         if (data.action === 'edit') {
-          if (!Number.isInteger(data.version) || data.version < 0 || data.version > 2147483647) {
-            return respond({ error: 'Close and reopen the edit form to load the latest activity.' }, 400)
-          }
           const rows = await sql`
             UPDATE activities SET title = ${title}, url = ${url}, category = ${data.category},
               description = ${description}, version = version + 1
-            WHERE id = ${data.id} AND version = ${data.version}
+            WHERE id = ${data.id} AND version = ${data.version} AND deleted_at IS NULL
             RETURNING id
           `
           if (!rows.length) {
@@ -92,6 +109,7 @@ export default async function handler(request) {
           FILTER (WHERE l.visitor_id IS NOT NULL), ARRAY[]::text[]) AS names,
         COALESCE(bool_or(l.visitor_id = ${visitor}), false) AS liked
       FROM activities a LEFT JOIN likes l ON a.id = l.activity_id
+      WHERE a.deleted_at IS NULL
       GROUP BY a.id ORDER BY a.position, a.created_at DESC, a.id
     `
     return respond({ activities })

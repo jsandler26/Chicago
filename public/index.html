@@ -51,7 +51,10 @@
       <label>Category<select name="category"><option>Other</option><option>Sightseeing</option><option>Arts &amp; culture</option><option>Food &amp; drink</option><option>Outdoors</option></select></label>
       <label>Description <span>(optional)</span><textarea name="description" maxlength="220" rows="3"></textarea></label>
       <p id="idea-error" class="error" role="alert"></p>
-      <button id="submit-idea" class="primary" type="submit">Add to the board</button>
+      <div class="idea-actions">
+        <button id="submit-idea" class="primary" type="submit">Add to the board</button>
+        <button id="delete-idea" class="secondary delete-idea" type="button" hidden>Delete activity</button>
+      </div>
     </form>
   </dialog>
 </body>

@@ -6,6 +6,7 @@ const summary = byId('summary')
 const dialog = byId('idea-dialog')
 const ideaForm = byId('idea-form')
 const submitIdea = byId('submit-idea')
+const deleteIdea = byId('delete-idea')
 const ideaTitle = ideaForm.elements.namedItem('title')
 const ideaUrl = ideaForm.elements.namedItem('url')
 const websiteStatus = byId('website-status')
@@ -229,6 +230,7 @@ function openIdea(activity) {
   }
   byId('idea-heading').textContent = activity ? 'Edit activity' : 'Add an idea'
   submitIdea.textContent = activity ? 'Save changes' : 'Add to the board'
+  deleteIdea.hidden = !activity
   notice.textContent = ''
   byId('idea-error').textContent = ''
   dialog.showModal()
@@ -248,25 +250,39 @@ byId('use-website').addEventListener('click', () => {
 dialog.addEventListener('close', clearSuggestion)
 byId('close').addEventListener('click', () => { if (!submitIdea.disabled) dialog.close() })
 dialog.addEventListener('cancel', event => { if (submitIdea.disabled) event.preventDefault() })
-ideaForm.addEventListener('submit', async event => {
-  event.preventDefault()
-  if (writing) return
-  const name = saveName()
-  if (!name) return
+async function submitActivity(action, name, fields = {}) {
   submitIdea.disabled = true
+  deleteIdea.disabled = true
   const errorField = byId('idea-error')
   errorField.textContent = ''
   try {
-    const fields = Object.fromEntries(new FormData(ideaForm))
-    await change({ ...fields, action: editing ? 'edit' : 'add', id: ideaId, version: editing?.version, name })
+    await change({ ...fields, action, id: ideaId, version: editing?.version, name })
     ideaForm.reset()
     dialog.close()
-    notice.textContent = editing ? 'Activity updated.' : 'Your idea was added to the board.'
+    const messages = { add: 'Your idea was added to the board.', edit: 'Activity updated.', delete: 'Activity removed from the board.' }
+    notice.textContent = messages[action]
+    if (action === 'delete') byId('add').focus()
   } catch (error) {
     errorField.textContent = error.message
   } finally {
     submitIdea.disabled = false
+    deleteIdea.disabled = false
   }
+}
+
+ideaForm.addEventListener('submit', event => {
+  event.preventDefault()
+  if (writing) return
+  const name = saveName()
+  if (!name) return
+  submitActivity(editing ? 'edit' : 'add', name, Object.fromEntries(new FormData(ideaForm)))
+})
+
+deleteIdea.addEventListener('click', () => {
+  if (!editing || writing) return
+  const name = saveName()
+  if (!name || !confirm('Delete “' + editing.title + '” from the shared board?')) return
+  submitActivity('delete', name)
 })
 
 refresh()

@@ -66,3 +66,8 @@ dialog input,dialog select,dialog textarea{display:block;width:100%;margin-top:5
 .website-status,.website-suggestion{margin-top:5px;font-size:.9rem}
 .website-status:empty,.website-suggestion[hidden]{display:none}
 .website-suggestion a{color:#165579;overflow-wrap:anywhere;min-width:0}
+
+.idea-actions{display:flex;flex-wrap:wrap;gap:8px}
+.idea-actions #submit-idea{flex:1}
+.delete-idea{color:#94172b;border-color:#e7a9b6;background:#fff}
+.delete-idea:hover{background:#fce8ed}
